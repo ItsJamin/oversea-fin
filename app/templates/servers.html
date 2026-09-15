@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Server-Instances</title>
+</head>
+<body>
+    <div class="server-form">
+        <h2>Add Instance</h2>
+        <form id="addServerForm">
+            <div>
+                <label>Server-URL:</label>
+                <input type="text" name="server_url" placeholder="http://192.168.1.100:8096" required>
+            </div>
+            <div>
+                <label>Username:</label>
+                <input type="text" name="username" required>
+            </div>
+            <div>
+                <label>Password:</label>
+                <input type="password" name="password" required>
+            </div>
+            <button type="submit">Add</button>
+        </form>
+        <div id="addServerError" class="error"></div>
+    </div>
+
+    <div class="server-list">
+        <h2>Saved Instances</h2>
+        {% for server in servers %}
+        <div class="server-item" id="server-{{ server.id }}">
+            <h3>{{ server.url }}</h3>
+            <p>User: {{ server.username }}</p>
+            <p>Libraries: {{ server.libraries|length }}</p>
+            <button onclick="fetchMedia('{{ server.id }}')">Fetch Media</button>
+            <button onclick="deleteServer('{{ server.id }}')">Remove</button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        document.getElementById("addServerForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const response = await fetch("/servers/add", {
+                method: "POST",
+                body: formData
+            });
+            const result = await response.json();
+            if (result.error) {
+                document.getElementById("addServerError").textContent = result.error;
+            } else {
+                window.location.reload();
+            }
+        });
+
+        async function deleteServer(serverId) {
+            const response = await fetch(`/servers/${serverId}/delete`, {
+                method: "POST"
+            });
+            if (response.ok) {
+                window.location.reload();
+            }
+        }
+
+        async function fetchMedia(serverId) {
+            const response = await fetch(`/servers/${serverId}/fetch`, {
+                method: "POST"
+            });
+            const result = await response.json();
+            if (result.error) {
+                alert(result.error);
+            } else {
+                alert(`Successfully fetch ${result.fetched} different media!`);
+            }
+        }
+    </script>
+</body>
+</html>
