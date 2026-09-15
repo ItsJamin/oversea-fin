@@ -1,10 +1,9 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Manage Server-Instances</title>
-</head>
-<body>
-    <div class="server-form">
+{% extends "base.html" %}
+
+{% block title %}OverseaFin{% endblock %}
+
+{% block content %}
+    <div class="server-form card">
         <h2>Add Instance</h2>
         <form id="addServerForm">
             <div>
@@ -19,7 +18,7 @@
                 <label>Password:</label>
                 <input type="password" name="password" required>
             </div>
-            <button type="submit">Add</button>
+            <button type="submit" class="btn">Add</button>
         </form>
         <div id="addServerError" class="error"></div>
     </div>
@@ -27,13 +26,14 @@
     <div class="server-list">
         <h2>Saved Instances</h2>
         {% for server in servers %}
-        <div class="server-item" id="server-{{ server.id }}">
+        <div class="server-item card" id="server-{{ server.id }}">
             <h3>{{ server.url }}</h3>
             <p>User: {{ server.username }}</p>
             <p>Libraries: {{ server.libraries|length }}</p>
-            <button onclick="fetchMedia('{{ server.id }}')">Fetch Media</button>
-            <button onclick="deleteServer('{{ server.id }}')">Remove</button>
+            <button onclick="fetchMedia('{{ server.id }}')" class="btn">Fetch Media</button>
+            <button onclick="deleteServer('{{ server.id }}')" class="btn">Remove</button>
         </div>
+        <br>
         {% endfor %}
     </div>
 
@@ -74,5 +74,4 @@
             }
         }
     </script>
-</body>
-</html>
+{% endblock %}
