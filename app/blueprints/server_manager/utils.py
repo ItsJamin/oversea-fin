@@ -1,7 +1,7 @@
 import base64
 import json
 import os
-import uuid
+import platform
 from urllib.parse import urljoin
 
 import requests
@@ -80,8 +80,8 @@ def fetch_media_from_library(server_url: str, access_token: str, library_id: str
 
 
 def get_headers(access_token=""):
-    client_name = "OverseaFin"
-    device_id = str(uuid.uuid4())
+    client_name = "OverseaFin - Overview Available Media"
+    device_id = str({platform.node()})
     version = "1.0.0"
 
     vanilla_token = (
