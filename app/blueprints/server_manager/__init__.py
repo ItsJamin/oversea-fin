@@ -8,6 +8,7 @@ from ...config import Config
 from ...models import Medium, db
 from .utils import (
     authenticate_jellyfin,
+    download_poster,
     fetch_jellyfin_libraries,
     fetch_media_from_library,
     load_servers,
@@ -76,7 +77,6 @@ def fetch_media(server_id):
 
     try:
         access_token = server["access_token"]
-        # user_id = server["user_id"]
         libraries = server["libraries"]
 
         for library in libraries:
@@ -89,24 +89,30 @@ def fetch_media(server_id):
             )
 
             for item in media_items:
-                unique_id = item.get("ProviderIds", {}).get("Tmdb") or f"{item['Name']}_{item.get('ProductionYear', '')}"
+                unique_media_id = item.get("ProviderIds", {}).get("Tmdb") or f"{item['Name']}_{item.get('ProductionYear', '')}"
+                item_id = item.get("Id")
 
-                existing_media = Medium.query.get(unique_id)
+                existing_media = Medium.query.get(unique_media_id)
                 if existing_media:
-
                     if existing_media.last_updated < item.get("DateLastModified", existing_media.last_updated):
                         existing_media.title = item["Name"]
                         existing_media.year = item.get("ProductionYear")
-                        existing_media.poster_url = item.get("PrimaryImageTag")
-                        existing_media.last_updated = datetime.utcnow()
+                        existing_media.last_updated = datetime.datetime.utcnow()
                         db.session.commit()
                 else:
+                    poster_filename = None
+                    if item_id:
+                        poster_filename = f"{unique_media_id}.jpg"
+                        downloaded_poster = download_poster(item_id, server["url"], poster_filename)
+                        if not downloaded_poster:
+                            poster_filename = None
+
                     new_media = Medium(
-                        id=unique_id,
+                        id=unique_media_id,
                         title=item["Name"],
                         year=item.get("ProductionYear"),
                         type=media_type,
-                        poster_url=item.get("PrimaryImageTag"),
+                        poster_url=poster_filename,
                         jellyfin_servers=json.dumps([server_id]),
                         tmdb_id=item.get("ProviderIds", {}).get("Tmdb"),
                         imdb_id=item.get("ProviderIds", {}).get("Imdb")

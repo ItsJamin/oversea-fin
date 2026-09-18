@@ -7,6 +7,8 @@ from urllib.parse import urljoin
 import requests
 from cryptography.fernet import Fernet
 
+from ...config import Config
+
 
 # encryption, used for creating a save file to store login credentials
 def get_encryption_key(config):
@@ -79,9 +81,29 @@ def fetch_media_from_library(server_url: str, access_token: str, library_id: str
     return response.json().get("Items", [])
 
 
+def download_poster(item_id: str, server_url: str, filename: str) -> str:
+    if not item_id:
+        return None
+
+    full_poster_url = f"{server_url}/Items/{item_id}/Images/Primary?maxWidth=400"
+    headers = get_headers()
+
+    try:
+        response = requests.get(full_poster_url, headers=headers, stream=True)
+        if response.status_code == 200:
+            os.makedirs(Config.POSTERS_DIR, exist_ok=True)
+            filepath = os.path.join(Config.POSTERS_DIR, filename)
+            with open(filepath, "wb") as f:
+                for chunk in response.iter_content(1024):
+                    f.write(chunk)
+            return filename
+    except Exception as e:
+        print(f"Failed to download poster: {e}")
+    return None
+
 def get_headers(access_token=""):
     client_name = "OverseaFin - Overview Available Media"
-    device_id = str({platform.node()})
+    device_id = str(platform.node())
     version = "1.0.0"
 
     vanilla_token = (
